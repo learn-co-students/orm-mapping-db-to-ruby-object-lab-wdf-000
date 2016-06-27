@@ -3,16 +3,36 @@ class Student
 
   def self.new_from_db(row)
     # create a new Student object given a row from the database
+    student = self.new
+    student.id = row [0]
+    student.name = row[1]
+    student.grade = row[2]
+    student
   end
 
   def self.all
     # retrieve all the rows from the "Students" database
     # remember each row should be a new instance of the Student class
+    all_sql = <<-SQL
+      SELECT * FROM students
+      SQL
+
+    DB[:conn].execute(all_sql).map do |row|
+      self.new_from_db(row)      
+    end
   end
 
   def self.find_by_name(name)
     # find the student in the database given a name
     # return a new instance of the Student class
+    find_sql = <<-SQL
+      SELECT * FROM students
+      WHERE name = ?
+      SQL
+
+    DB[:conn].execute(find_sql,name).map do |row|
+      self.new_from_db(row)
+    end.first
   end
   
   def save
@@ -39,5 +59,54 @@ class Student
   def self.drop_table
     sql = "DROP TABLE IF EXISTS students"
     DB[:conn].execute(sql)
+  end
+
+  def self.count_all_students_in_grade_9 
+    count_grade_9_sql = <<-SQL
+      SELECT * FROM students
+      WHERE grade = 9
+      SQL
+
+    DB[:conn].execute(count_grade_9_sql)
+  end
+
+  def self.students_below_12th_grade 
+    students_below_12th_grade_sql = <<-SQL
+      SELECT * FROM students
+      WHERE grade < 12 
+      SQL
+
+    DB[:conn].execute(students_below_12th_grade_sql)
+  end
+
+  def self.first_x_students_in_grade_10(n) 
+    first_x_grade_10_sql = <<-SQL
+      SELECT * FROM students
+      WHERE grade = 10
+      LIMIT ?
+      SQL
+
+    DB[:conn].execute(first_x_grade_10_sql,n)
+  end
+
+  def self.first_student_in_grade_10
+    first_student_in_grade_10_sql = <<-SQL
+      SELECT * FROM students
+      WHERE grade = 10
+      LIMIT 1
+      SQL
+
+    first_student_data = DB[:conn].execute(first_student_in_grade_10_sql).map do |row|
+      self.new_from_db(row)
+    end.first
+  end
+
+  def self.all_students_in_grade_X(x) 
+    all_students_in_grade_x_sql = <<-SQL
+      SELECT * FROM students
+      WHERE grade = ?
+      SQL
+
+    DB[:conn].execute(all_students_in_grade_x_sql,x)
   end
 end
